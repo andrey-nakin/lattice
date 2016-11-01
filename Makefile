@@ -8,9 +8,14 @@ LIBS =
 
 TARGET =	lattice
 
+CONDOR_TARGET =	$(TARGET).condor
+
 $(TARGET):	$(OBJS)
 	$(CXX) -o $(TARGET) $(OBJS) $(LIBS)
 
+$(CONDOR_TARGET):	$(OBJS)
+	condor_compile $(CXX) -o $(CONDOR_TARGET) $(OBJS) $(LIBS)
+	
 all:	$(TARGET)
 
 clean:
