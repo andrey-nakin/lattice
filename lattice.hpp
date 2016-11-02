@@ -4,6 +4,7 @@
 #include <iostream>
 #include <numeric>
 #include <random>
+#include "statistics.hpp"
 
 class Lattice {
 public:
@@ -63,6 +64,29 @@ private:
 
 	index_type leftOf(const index_type index) const {
 		return index - 1;
+	}
+
+	void pass(const index_type i, const bool inverseClusterStat, unsigned& size, std::vector<unsigned char>& passed) const {
+		if (!passed[i]) {
+			passed[i] = 1;
+
+			if ((active[i] && !inverseClusterStat) || (!active[i] && inverseClusterStat)) {
+				size++;
+
+				if (!isLowest(i)) {
+					pass(lower(i), inverseClusterStat, size, passed);
+				}
+				if (!isUpper(i)) {
+					pass(higher(i), inverseClusterStat, size, passed);
+				}
+				if (!isLeft(i)) {
+					pass(leftOf(i), inverseClusterStat, size, passed);
+				}
+				if (!isRight(i)) {
+					pass(rightOf(i), inverseClusterStat, size, passed);
+				}
+			}
+		}
 	}
 
 public:
@@ -130,17 +154,74 @@ public:
 		return size;
 	}
 
-	aval_vector_type run(std::ostream* const out, const aval_vector_type::size_type numOfRuns) {
+	std::vector<unsigned> clusters(const bool inverseClusterStat) const {
+		std::vector<unsigned> result;
+		std::vector<unsigned char> passed(active.size(), 0);
+
+		for (index_type i = 0; i < active.size(); i++) {
+			if (!passed[i]) {
+				unsigned size = 0;
+				pass(i, inverseClusterStat, size, passed);
+				if (size > 0) {
+					result.push_back(size);
+				}
+			}
+		}
+
+		//std::cerr << "sum of passed = " << std::accumulate(passed.begin(), passed.end(), 0) << std::endl;
+		//std::cerr << "sum of sizes = " << std::accumulate(result.begin(), result.end(), 0) << std::endl;
+		//for (unsigned s : result) {
+		//	std::cerr << s << ' ';
+		//}
+		//std::cerr << "\n*******************************" << std::endl;
+		//for (index_type y = 0; y < M; y++) {
+		//	for (index_type x = 0; x < M; x++) {
+		//		std::cerr << (char) ('0' + active[y * M + x]) << ' ';
+		//	}
+		//	std::cerr << '\n';
+		//}
+		//std::cerr << "\n*******************************" << std::endl;
+
+		return result;
+	}
+
+	aval_vector_type run(std::ostream* const out, const aval_vector_type::size_type numOfRuns, const bool clusterStat, const bool inverseClusterStat) {
 		aval_vector_type result;
 		result.reserve(numOfRuns);
+
+		if (out) {
+			*out << "# av.size\tavg.z";
+
+			if (clusterStat) {
+				*out << '\t';
+				if (inverseClusterStat) {
+					Statistics::statisticsHeader(out, "icl.");
+				} else {
+					Statistics::statisticsHeader(out, "cl.");
+				}
+			}
+
+			*out << std::endl;
+		}
 
 		for (auto run = numOfRuns; run > 0; run--) {
 			const auto avSize = avalanche();
 			result.push_back(avSize);
 
 			if (out) {
-				*out << avSize << '\t' << avgValue() << std::endl;
+				*out << avSize << '\t' << avgValue();
+
+				if (clusterStat) {
+					std::vector<unsigned> cs = clusters(inverseClusterStat);
+					Statistics::statistics(out, cs);
+				}
+
+				*out << std::endl;
 			}
+		}
+
+		if (out) {
+			*out << std::endl;
 		}
 
 		return result;

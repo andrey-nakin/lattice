@@ -38,8 +38,9 @@ public:
 		return data;
 	}
 
-	static double median(const std::vector<double>& data) {
-		const size_t n = data.size() / 2;
+	template <typename T>
+	static double median(const std::vector<T>& data) {
+		const std::size_t n = data.size() / 2;
 
 		if (data.size() % 2) {
 			return data[n];
@@ -48,14 +49,44 @@ public:
 		}
 	}
 
-	static void statistics(std::ostream* out, std::vector<double>& data) {
+	static void statisticsHeader(std::ostream* out, const char* const prefix) {
+		if (out) {
+			*out
+			<< prefix << "size"
+			<< '\t' << prefix << "median"
+			<< '\t' << prefix << "min"
+			<< '\t' << prefix << "max"
+			<< '\t' << prefix << "mean"
+			<< '\t' << prefix << "m2"
+			<< '\t' << prefix << "m3"
+			<< '\t' << prefix << "m4"
+			<< '\t' << prefix << "var"
+			<< '\t' << prefix << "cm3"
+			<< '\t' << prefix << "cm4";
+		}
+	}
+
+	template <typename T>
+	static void statistics(std::ostream* out, std::vector<T>& data) {
+		if (data.empty()) {
+			return;
+		}
+
 		double sum1 = 0.0, sum2 = 0.0, sum3 = 0.0, sum4 = 0.0;
+		T min = data[0], max = data[0];
 
 		for(auto v : data) {
 			sum1 += v;
 			sum2 += v * v;
 			sum3 += v * v * v;
 			sum4 += v * v * v * v;
+
+			if (v < min) {
+				min = v;
+			}
+			if (v > max) {
+				max = v;
+			}
 		}
 
 		const double m1 = sum1 / data.size();
@@ -76,12 +107,10 @@ public:
 		const double cm4 = sum4 / data.size();
 
 		std::sort(data.begin(), data.end());
-		const double first = data[data.size() / 10];
 		const double med = median(data);
-		const double last = data[data.size() - data.size() / 10];
 
 		if (out) {
-			*out << "#\t" << data.size() << '\t' << first << '\t' << med << '\t' << last << '\t' << m1 << '\t' << m2 << '\t' << m3 << '\t' << m4 << '\t' << cm2 << '\t' << cm3 << '\t' << cm4 << std::endl;
+			*out << "\t" << data.size() << '\t' << med << '\t' << min << '\t' << max << '\t' << m1 << '\t' << m2 << '\t' << m3 << '\t' << m4 << '\t' << cm2 << '\t' << cm3 << '\t' << cm4;
 		}
 	}
 

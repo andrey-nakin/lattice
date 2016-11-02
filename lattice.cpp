@@ -13,13 +13,21 @@ int main(const int argc, char* const* const argv) {
 	Lattice::probability_type p = 0.8;
 	Lattice::value_type zc = 5;
 	std::string avalFileName;
+	bool clusterStat = false;
+	bool inverseClusterStat = false;
 
 	int res = 0;
-	while ((res = getopt(argc, argv, "a:m:n:p:s:z:")) != -1) {
+	while ((res = getopt(argc, argv, "a:cim:n:p:s:z:")) != -1) {
 		switch (res){
 		case 'a':
 			avalFileName = optarg;
-		break;
+			break;
+		case 'c':
+			clusterStat = true;
+			break;
+		case 'i':
+			inverseClusterStat = true;
+			break;
 		case 'm':
 			M = atoi(optarg);
 			break;
@@ -38,6 +46,8 @@ int main(const int argc, char* const* const argv) {
 		case '?':
 			std::cerr << "Usage: lattice <params>\n"
 				"\t-a <path>\tavalanche file name\n"
+				"\t-i \tinverse cluster statistics\n"
+				"\t-c \tadd cluster statistics to avalanche file\n"
 				"\t-m <int>\tlattice side size\n"
 				"\t-n <int>\tnumber of runs\n"
 				"\t-p <float>\tprobability of activity\n"
@@ -52,13 +62,13 @@ int main(const int argc, char* const* const argv) {
 	Lattice calc(seed, M, zc, p);
 
 	if (skip > 0) {
-		calc.run(nullptr, skip);
+		calc.run(nullptr, skip, false, false);
 	}
 
 	std::vector<unsigned> avalanches;
 	{
 		const std::unique_ptr<std::ostream> avalFile(avalFileName.empty() ? nullptr : new std::ofstream(avalFileName));
-		avalanches = calc.run(avalFile.get(), N);
+		avalanches = calc.run(avalFile.get(), N, clusterStat, inverseClusterStat);
 	}
 
 //	const std::vector<unsigned> untailed = Statistics::cutTail(data, 2);
