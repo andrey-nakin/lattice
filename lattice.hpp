@@ -190,7 +190,7 @@ public:
 		result.reserve(numOfRuns);
 
 		if (out) {
-			*out << "# av.size\tavg.z";
+			*out << "# av.size\tavg.z.0\tavg.z";
 
 			if (clusterStat) {
 				*out << '\t';
@@ -204,12 +204,15 @@ public:
 			*out << std::endl;
 		}
 
+		auto prevAvgValue = avgValue();
 		for (auto run = numOfRuns; run > 0; run--) {
 			const auto avSize = avalanche();
 			result.push_back(avSize);
 
 			if (out) {
-				*out << avSize << '\t' << avgValue();
+				const auto currAvgValue = avgValue();
+				*out << avSize << '\t' << prevAvgValue << '\t' << currAvgValue;
+				prevAvgValue = currAvgValue;
 
 				if (clusterStat) {
 					std::vector<unsigned> cs = clusters(inverseClusterStat);
