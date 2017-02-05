@@ -21,6 +21,7 @@ private:
 	const size_type M;	//	размер стороны решетки
 	const value_type zc;		//	критическое значение z в узле
 	const std::vector<probability_type> probOfActivity;
+	const aval_type maxAvalSize;	// max possible avalanche size
 
 	std::vector<unsigned char> active;
 	value_vector_type values;
@@ -91,10 +92,11 @@ private:
 
 public:
 
-	Lattice(const long seed, const size_type M, const value_type zc, const probability_type activeProb) :
+	Lattice(const long seed, const size_type M, const value_type zc, const probability_type activeProb, const aval_type maxAvalSize) :
 		M(M),
 		zc(zc),
 		probOfActivity(makeProbabilities(M * M, activeProb)),
+		maxAvalSize(maxAvalSize),
 		active(probOfActivity.size()),
 		values(probOfActivity.size()),
 		generator(seed),
@@ -167,20 +169,6 @@ public:
 				}
 			}
 		}
-
-		//std::cerr << "sum of passed = " << std::accumulate(passed.begin(), passed.end(), 0) << std::endl;
-		//std::cerr << "sum of sizes = " << std::accumulate(result.begin(), result.end(), 0) << std::endl;
-		//for (unsigned s : result) {
-		//	std::cerr << s << ' ';
-		//}
-		//std::cerr << "\n*******************************" << std::endl;
-		//for (index_type y = 0; y < M; y++) {
-		//	for (index_type x = 0; x < M; x++) {
-		//		std::cerr << (char) ('0' + active[y * M + x]) << ' ';
-		//	}
-		//	std::cerr << '\n';
-		//}
-		//std::cerr << "\n*******************************" << std::endl;
 
 		return result;
 	}

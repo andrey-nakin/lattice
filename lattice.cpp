@@ -12,6 +12,7 @@ int main(const int argc, char* const* const argv) {
 	Lattice::size_type M = 100;
 	Lattice::probability_type p = 0.8;
 	Lattice::value_type zc = 5;
+	Lattice::aval_type maxAvalSize = 0;
 	std::string avalFileName;
 	bool clusterStat = false;
 	bool inverseClusterStat = false;
@@ -40,6 +41,9 @@ int main(const int argc, char* const* const argv) {
 		case 's':
 			skip = atoi(optarg);
 			break;
+		case 'x':
+			maxAvalSize = atoi(optarg);
+			break;
 		case 'z':
 			zc = atoi(optarg);
 			break;
@@ -52,6 +56,7 @@ int main(const int argc, char* const* const argv) {
 				"\t-n <int>\tnumber of runs\n"
 				"\t-p <float>\tprobability of activity\n"
 				"\t-s <int>\tnumber of dry runs\n"
+				"\t-x <int>\tmax avalanche size\n"
 				"\t-z <int>\tcritical value\n";
 			return 1;
 			break;
@@ -59,7 +64,7 @@ int main(const int argc, char* const* const argv) {
 	}
 
 	const long seed = std::chrono::system_clock::now().time_since_epoch().count();
-	Lattice calc(seed, M, zc, p);
+	Lattice calc(seed, M, zc, p, maxAvalSize);
 
 	if (skip > 0) {
 		calc.run(nullptr, skip, false, false);
