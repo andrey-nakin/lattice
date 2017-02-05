@@ -151,7 +151,7 @@ public:
 			if (!endava) {
 				values = tmpValues;
 			}
-		} while (!endava);
+		} while (!endava && (!maxAvalSize || size < maxAvalSize));
 
 		return size;
 	}
