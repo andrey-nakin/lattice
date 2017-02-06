@@ -18,7 +18,7 @@ int main(const int argc, char* const* const argv) {
 	bool inverseClusterStat = false;
 
 	int res = 0;
-	while ((res = getopt(argc, argv, "a:cim:n:p:s:z:")) != -1) {
+	while ((res = getopt(argc, argv, "a:cim:n:p:s:x:z:")) != -1) {
 		switch (res){
 		case 'a':
 			avalFileName = optarg;
