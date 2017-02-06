@@ -13,12 +13,13 @@ int main(const int argc, char* const* const argv) {
 	Lattice::probability_type p = 0.8;
 	Lattice::value_type zc = 5;
 	Lattice::aval_type maxAvalSize = 0;
+	Lattice::aval_type resetFreq = 0;
 	std::string avalFileName;
 	bool clusterStat = false;
 	bool inverseClusterStat = false;
 
 	int res = 0;
-	while ((res = getopt(argc, argv, "a:cim:n:p:s:x:z:")) != -1) {
+	while ((res = getopt(argc, argv, "a:cim:n:p:r:s:x:z:")) != -1) {
 		switch (res){
 		case 'a':
 			avalFileName = optarg;
@@ -38,6 +39,9 @@ int main(const int argc, char* const* const argv) {
 		case 'p':
 			p = atof(optarg);
 			break;
+		case 'r':
+			resetFreq = atoi(optarg);
+			break;
 		case 's':
 			skip = atoi(optarg);
 			break;
@@ -55,6 +59,7 @@ int main(const int argc, char* const* const argv) {
 				"\t-m <int>\tlattice side size\n"
 				"\t-n <int>\tnumber of runs\n"
 				"\t-p <float>\tprobability of activity\n"
+				"\t-r <int>\tactivity reset frequency\n"
 				"\t-s <int>\tnumber of dry runs\n"
 				"\t-x <int>\tmax avalanche size\n"
 				"\t-z <int>\tcritical value\n";
@@ -64,7 +69,7 @@ int main(const int argc, char* const* const argv) {
 	}
 
 	const long seed = std::chrono::system_clock::now().time_since_epoch().count();
-	Lattice calc(seed, M, zc, p, maxAvalSize);
+	Lattice calc(seed, M, zc, p, maxAvalSize, resetFreq);
 
 	if (skip > 0) {
 		calc.run(nullptr, skip, false, false);

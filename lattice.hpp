@@ -22,6 +22,7 @@ private:
 	const value_type zc;		//	критическое значение z в узле
 	const std::vector<probability_type> probOfActivity;
 	const aval_type maxAvalSize;	// max possible avalanche size
+	const aval_type resetFreq;	// toppling frequency
 
 	std::vector<unsigned char> active;
 	value_vector_type values;
@@ -92,11 +93,12 @@ private:
 
 public:
 
-	Lattice(const long seed, const size_type M, const value_type zc, const probability_type activeProb, const aval_type maxAvalSize) :
+	Lattice(const long seed, const size_type M, const value_type zc, const probability_type activeProb, const aval_type maxAvalSize, const aval_type resetFreq) :
 		M(M),
 		zc(zc),
 		probOfActivity(makeProbabilities(M * M, activeProb)),
 		maxAvalSize(maxAvalSize),
+		resetFreq(resetFreq),
 		active(probOfActivity.size()),
 		values(probOfActivity.size()),
 		generator(seed),
@@ -108,21 +110,37 @@ public:
 		return 1.0 / values.size() * std::accumulate(values.begin(), values.end(), 0);
 	}
 
-	aval_type avalanche() {
-		decltype(avalanche()) size = 0;	//	размер лавины
-
+	void topple() {
 	    // добавляем z в случайный узел}
 		values[indexGenerator(generator)] += 1;
+	}
 
+	void reset() {
 		//	выбираем, какие узлы будут активны в данной лавине
 		for (index_type i = 0; i < active.size(); i++) {
 			active[i] = probGenerator(generator) < probOfActivity[i] ? 1 : 0;
+		}
+	}
+
+	aval_type avalanche() {
+		decltype(avalanche()) size = 0;	//	размер лавины
+
+		topple();
+
+		if (!resetFreq) {
+			reset();
 		}
 
 		auto tmpValues = values;
 
 		bool endava;
+		aval_type waveCounter = 0;
+
 		do {
+			if (resetFreq && waveCounter % resetFreq == 0) {
+				reset();
+			}
+
 			endava = true;
 
 			for (index_type i = 0; i < values.size(); i++) {
@@ -151,6 +169,8 @@ public:
 			if (!endava) {
 				values = tmpValues;
 			}
+
+			waveCounter++;
 		} while (!endava && (!maxAvalSize || size < maxAvalSize));
 
 		return size;
