@@ -122,8 +122,8 @@ public:
 		}
 	}
 
-	aval_type avalanche() {
-		decltype(avalanche()) size = 0;	//	размер лавины
+	std::pair<aval_type, aval_type> avalanche() {
+		aval_type size = 0;	//	размер лавины
 
 		topple();
 
@@ -173,7 +173,7 @@ public:
 			waveCounter++;
 		} while (!endava && (!maxAvalSize || size < maxAvalSize));
 
-		return size;
+		return std::pair<aval_type, aval_type>(size, waveCounter);
 	}
 
 	std::vector<unsigned> clusters(const bool inverseClusterStat) const {
@@ -198,7 +198,7 @@ public:
 		result.reserve(numOfRuns);
 
 		if (out) {
-			*out << "# av.size\tavg.z.0\tavg.z";
+			*out << "# av.size\tav.len\tavg.z.0\tavg.z";
 
 			if (clusterStat) {
 				*out << '\t';
@@ -214,12 +214,12 @@ public:
 
 		auto prevAvgValue = avgValue();
 		for (auto run = numOfRuns; run > 0; run--) {
-			const auto avSize = avalanche();
-			result.push_back(avSize);
+			const auto avResult = avalanche();
+			result.push_back(avResult.first);
 
 			if (out) {
 				const auto currAvgValue = avgValue();
-				*out << avSize << '\t' << prevAvgValue << '\t' << currAvgValue;
+				*out << avResult.first << '\t' << avResult.second << '\t' << prevAvgValue << '\t' << currAvgValue;
 				prevAvgValue = currAvgValue;
 
 				if (clusterStat) {
