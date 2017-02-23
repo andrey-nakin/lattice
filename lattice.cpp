@@ -14,13 +14,29 @@ int main(const int argc, char* const* const argv) {
 	Lattice::value_type zc = 5;
 	Lattice::aval_type maxAvalSize = 0;
 	Lattice::aval_type resetFreq = 0;
+	Lattice::write_option_set writeOptions;
 	std::string avalFileName;
 	bool clusterStat = false;
 	bool inverseClusterStat = false;
 
 	int res = 0;
-	while ((res = getopt(argc, argv, "a:cim:n:p:r:s:x:z:")) != -1) {
+	while ((res = getopt(argc, argv, "12345a:cim:n:p:r:s:x:z:")) != -1) {
 		switch (res){
+		case '1':
+			writeOptions.insert(Lattice::WriteOption::AvalancheSize);
+			break;
+		case '2':
+			writeOptions.insert(Lattice::WriteOption::AvalancheLength);
+			break;
+		case '3':
+			writeOptions.insert(Lattice::WriteOption::AverageZBefore);
+			break;
+		case '4':
+			writeOptions.insert(Lattice::WriteOption::AverageZAfter);
+			break;
+		case '5':
+			writeOptions.insert(Lattice::WriteOption::ExcitedCount);
+			break;
 		case 'a':
 			avalFileName = optarg;
 			break;
@@ -53,6 +69,11 @@ int main(const int argc, char* const* const argv) {
 			break;
 		case '?':
 			std::cerr << "Usage: lattice <params>\n"
+				"\t-1 \twrite avalanche size\n"
+				"\t-2 \twrite avalanche length\n"
+				"\t-3 \twrite <z> before avalanche\n"
+				"\t-4 \twrite <z> after avalanche\n"
+				"\t-5 \twrite number of excited nodes\n"
 				"\t-a <path>\tavalanche file name\n"
 				"\t-i \tinverse cluster statistics\n"
 				"\t-c \tadd cluster statistics to avalanche file\n"
@@ -72,13 +93,13 @@ int main(const int argc, char* const* const argv) {
 	Lattice calc(seed, M, zc, p, maxAvalSize, resetFreq);
 
 	if (skip > 0) {
-		calc.run(nullptr, skip, false, false);
+		calc.run(nullptr, skip, false, false, writeOptions);
 	}
 
 	std::vector<unsigned> avalanches;
 	{
 		const std::unique_ptr<std::ostream> avalFile(avalFileName.empty() ? nullptr : new std::ofstream(avalFileName));
-		avalanches = calc.run(avalFile.get(), N, clusterStat, inverseClusterStat);
+		avalanches = calc.run(avalFile.get(), N, clusterStat, inverseClusterStat, writeOptions);
 	}
 
 //	const std::vector<unsigned> untailed = Statistics::cutTail(data, 2);

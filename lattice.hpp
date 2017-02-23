@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <set>
 #include <iostream>
 #include <numeric>
 #include <random>
@@ -8,6 +9,11 @@
 
 class Lattice {
 public:
+
+	enum class WriteOption {
+		AvalancheSize, AvalancheLength, AverageZBefore, AverageZAfter, ExcitedCount
+	};
+
 	typedef float probability_type;
 	typedef int value_type;
 	typedef std::vector<value_type> value_vector_type;
@@ -15,6 +21,7 @@ public:
 	typedef value_vector_type::size_type index_type;
 	typedef unsigned aval_type;
 	typedef std::vector<aval_type> aval_vector_type;
+	typedef std::set<WriteOption> write_option_set;
 
 private:
 
@@ -91,6 +98,12 @@ private:
 		}
 	}
 
+	template<class T>
+	static bool contains(const std::set<T>& container, const T& elem)
+	{
+		return container.find(elem) != container.end();
+	}
+
 public:
 
 	Lattice(const long seed, const size_type M, const value_type zc, const probability_type activeProb, const aval_type maxAvalSize, const aval_type resetFreq) :
@@ -122,6 +135,22 @@ public:
 		}
 	}
 
+	bool isExcited(const index_type i) const {
+		return values[i] >= zc;
+	}
+
+	unsigned numOfExcited() const {
+		unsigned result = 0;
+
+		for (index_type i = 0; i < values.size(); i++) {
+			if (isExcited(i)) {
+				result++;
+			}
+		}
+
+		return result;
+	}
+
 	std::pair<aval_type, aval_type> avalanche() {
 		aval_type size = 0;	//	размер лавины
 
@@ -144,7 +173,7 @@ public:
 			endava = true;
 
 			for (index_type i = 0; i < values.size(); i++) {
-				if (active[i] && values[i] >= zc) {
+				if (active[i] && isExcited(i)) {
 					endava = false;	//	отмечаем, что лавина не закончилась
 
 					if (!isLowest(i)) {
@@ -193,15 +222,30 @@ public:
 		return result;
 	}
 
-	aval_vector_type run(std::ostream* const out, const aval_vector_type::size_type numOfRuns, const bool clusterStat, const bool inverseClusterStat) {
+	aval_vector_type run(std::ostream* const out, const aval_vector_type::size_type numOfRuns, const bool clusterStat, const bool inverseClusterStat, const write_option_set& writeOptions) {
 		aval_vector_type result;
 		result.reserve(numOfRuns);
 
 		if (out) {
-			*out << "# av.size\tav.len\tavg.z.0\tavg.z";
+			*out << "# ";
+
+			if (contains(writeOptions, WriteOption::AvalancheSize)) {
+				*out << "av.size\t";
+			}
+			if (contains(writeOptions, WriteOption::AvalancheLength)) {
+				*out << "av.len\t";
+			}
+			if (contains(writeOptions, WriteOption::AverageZBefore)) {
+				*out << "avg.z.0\t";
+			}
+			if (contains(writeOptions, WriteOption::AverageZAfter)) {
+				*out << "avg.z\t";
+			}
+			if (contains(writeOptions, WriteOption::ExcitedCount)) {
+				*out << "exited\t";
+			}
 
 			if (clusterStat) {
-				*out << '\t';
 				if (inverseClusterStat) {
 					Statistics::statisticsHeader(out, "icl.");
 				} else {
@@ -219,8 +263,22 @@ public:
 
 			if (out) {
 				const auto currAvgValue = avgValue();
-				*out << avResult.first << '\t' << avResult.second << '\t' << prevAvgValue << '\t' << currAvgValue;
-				prevAvgValue = currAvgValue;
+
+				if (contains(writeOptions, WriteOption::AvalancheSize)) {
+					*out << avResult.first << '\t';
+				}
+				if (contains(writeOptions, WriteOption::AvalancheLength)) {
+					*out << avResult.second << '\t';
+				}
+				if (contains(writeOptions, WriteOption::AverageZBefore)) {
+					*out << prevAvgValue << '\t';
+				}
+				if (contains(writeOptions, WriteOption::AverageZAfter)) {
+					*out << currAvgValue << '\t';
+				}
+				if (contains(writeOptions, WriteOption::ExcitedCount)) {
+					*out << numOfExcited() << '\t';
+				}
 
 				if (clusterStat) {
 					std::vector<unsigned> cs = clusters(inverseClusterStat);
@@ -228,6 +286,8 @@ public:
 				}
 
 				*out << std::endl;
+
+				prevAvgValue = currAvgValue;
 			}
 		}
 
